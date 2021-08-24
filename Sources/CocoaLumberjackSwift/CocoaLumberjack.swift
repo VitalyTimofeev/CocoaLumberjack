@@ -49,23 +49,27 @@ extension DDLogFlag {
     }
 }
 
-/// The log level that can dynamically limit log messages (vs. the static DDDefaultLogLevel). This log level will only be checked, if the message passes the `DDDefaultLogLevel`.
-public var dynamicLogLevel = DDLogLevel.all
+public struct DDLogSettings {
+    /// The log level that can dynamically limit log messages (vs. the static DDDefaultLogLevel). This log level will only be checked, if the message passes the `DDDefaultLogLevel`.
+    public static var dynamicLogLevel = DDLogLevel.all
+    /// If `true`, all logs (except errors) are logged asynchronously by default.
+    public static var asyncLoggingEnabled = true
+}
 
 /// Resets the `dynamicLogLevel` to `.all`.
 /// - SeeAlso: `dynamicLogLevel`
 @inlinable
 public func resetDynamicLogLevel() {
-    dynamicLogLevel = .all
+    DDLogSettings.dynamicLogLevel = .all
 }
 
 @available(*, deprecated, message: "Please use dynamicLogLevel", renamed: "dynamicLogLevel")
 public var defaultDebugLevel: DDLogLevel {
     get {
-        return dynamicLogLevel
+        return DDLogSettings.dynamicLogLevel
     }
     set {
-        dynamicLogLevel = newValue
+        DDLogSettings.dynamicLogLevel = newValue
     }
 }
 
@@ -73,9 +77,6 @@ public var defaultDebugLevel: DDLogLevel {
 public func resetDefaultDebugLevel() {
     resetDynamicLogLevel()
 }
-
-/// If `true`, all logs (except errors) are logged asynchronously by default.
-public var asyncLoggingEnabled = true
 
 @inlinable
 public func _DDLogMessage(_ message: @autoclosure () -> Any,
@@ -90,7 +91,7 @@ public func _DDLogMessage(_ message: @autoclosure () -> Any,
                           ddlog: DDLog) {
     // The `dynamicLogLevel` will always be checked here (instead of being passed in).
     // We cannot "mix" it with the `DDDefaultLogLevel`, because otherwise the compiler won't strip strings that are not logged.
-    if level.rawValue & flag.rawValue != 0 && dynamicLogLevel.rawValue & flag.rawValue != 0 {
+    if level.rawValue & flag.rawValue != 0 && DDLogSettings.dynamicLogLevel.rawValue & flag.rawValue != 0 {
         // Tell the DDLogMessage constructor to copy the C strings that get passed to it.
         let logMessage = DDLogMessage(message: String(describing: message()),
                                       level: level,
@@ -114,7 +115,7 @@ public func DDLogDebug(_ message: @autoclosure () -> Any,
                        function: StaticString = #function,
                        line: UInt = #line,
                        tag: Any? = nil,
-                       asynchronous async: Bool = asyncLoggingEnabled,
+                       asynchronous async: Bool = DDLogSettings.asyncLoggingEnabled,
                        ddlog: DDLog = .sharedInstance) {
     _DDLogMessage(message(), level: level, flag: .debug, context: context, file: file, function: function, line: line, tag: tag, asynchronous: async, ddlog: ddlog)
 }
@@ -127,7 +128,7 @@ public func DDLogInfo(_ message: @autoclosure () -> Any,
                       function: StaticString = #function,
                       line: UInt = #line,
                       tag: Any? = nil,
-                      asynchronous async: Bool = asyncLoggingEnabled,
+                      asynchronous async: Bool = DDLogSettings.asyncLoggingEnabled,
                       ddlog: DDLog = .sharedInstance) {
     _DDLogMessage(message(), level: level, flag: .info, context: context, file: file, function: function, line: line, tag: tag, asynchronous: async, ddlog: ddlog)
 }
@@ -140,7 +141,7 @@ public func DDLogWarn(_ message: @autoclosure () -> Any,
                       function: StaticString = #function,
                       line: UInt = #line,
                       tag: Any? = nil,
-                      asynchronous async: Bool = asyncLoggingEnabled,
+                      asynchronous async: Bool = DDLogSettings.asyncLoggingEnabled,
                       ddlog: DDLog = .sharedInstance) {
     _DDLogMessage(message(), level: level, flag: .warning, context: context, file: file, function: function, line: line, tag: tag, asynchronous: async, ddlog: ddlog)
 }
@@ -153,7 +154,7 @@ public func DDLogVerbose(_ message: @autoclosure () -> Any,
                          function: StaticString = #function,
                          line: UInt = #line,
                          tag: Any? = nil,
-                         asynchronous async: Bool = asyncLoggingEnabled,
+                         asynchronous async: Bool = DDLogSettings.asyncLoggingEnabled,
                          ddlog: DDLog = .sharedInstance) {
     _DDLogMessage(message(), level: level, flag: .verbose, context: context, file: file, function: function, line: line, tag: tag, asynchronous: async, ddlog: ddlog)
 }
